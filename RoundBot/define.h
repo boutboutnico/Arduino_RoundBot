@@ -13,8 +13,8 @@
  * @brief	xx
  * @author	boutboutnico
  * @date	25 juil. 2012
- * @company	Itron
- * @site	Chasseneuil
+ * @company
+ * @site
  * @product	xx
  * @module	xx
  *****************************************************************************/
@@ -68,9 +68,9 @@ typedef struct
 typedef struct
 {
 	uint8_t dir_pin;
-	uint8_t vit_pin;
+	uint8_t cmd_pin;
 	uint8_t dir;
-	int16 vit;
+	int16 cmd;
 } ST_Motor;
 
 #endif /* DEFINE_H_ */
