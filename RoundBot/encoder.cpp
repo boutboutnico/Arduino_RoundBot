@@ -37,12 +37,7 @@
  *****************************************************************************/
 
 Encoder::Encoder(int8 pin_A, int8 int_pin_A, int8 pin_B, pfunc interrupt, bool isCCW)
-		:
-		  pin_A(pin_A),
-		  int_pin_A(int_pin_A),
-		  pin_B(pin_B),
-		  interrupt(interrupt),
-		  b_CCW(isCCW)
+		: pin_A(pin_A), int_pin_A(int_pin_A), pin_B(pin_B), interrupt(interrupt), b_CCW(isCCW)
 {
 	cpt_encoder = 0;
 }
@@ -90,7 +85,7 @@ void Encoder::update()
 
 int32 Encoder::getCount()
 {
-	if(b_CCW == true)	return cpt_encoder;
+	if(b_CCW == true) return cpt_encoder;
 	else return -cpt_encoder;
 }
 

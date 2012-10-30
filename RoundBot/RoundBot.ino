@@ -33,7 +33,7 @@ uint32 time_limit = 40;
 
 // min = 5 (less no tested)
 // max = 60 (pwm = 255)
-float l_consigne = 30; //cm/sec
+float l_consigne = 0; //cm/sec
 float r_consigne = 0; //cm/sec
 
 // Result from Ziegler & Nichols method
@@ -44,26 +44,8 @@ float kp = 3;
 float ki = 1;
 float kd = 0;
 
-//PID l_pid(l_consigne, st_vel.l_vel, l_cmd, kp, ki, kd);
-PID l_pid(
-        (double*) &st_vel.l_vel,
-        (double*) &l_cmd,
-        (double*) &l_consigne,
-        (double) kp,
-        (double) ki,
-        (double) kd,
-        DIRECT);
-
-PID r_pid(
-        (double*) &st_vel.r_vel,
-        (double*) &r_cmd,
-        (double*) &l_consigne,
-        (double) kp,
-        (double) ki,
-        (double) kd,
-        DIRECT);
-
-//PID r_pid(r_consigne, st_vel.r_vel, r_cmd, 2, 3, 2);
+PID l_pid(l_consigne, st_vel.l_vel, l_cmd, kp, ki, kd);
+PID r_pid(r_consigne, st_vel.r_vel, r_cmd, 2, 3, 2);
 
 //--------------------------------------------------
 //	Setup
@@ -73,58 +55,56 @@ PID r_pid(
  */
 void setup()
 {
-	//Right motor
+	//--------------------------------------------------
+	// Right motor
+	//--------------------------------------------------
 	pinMode(st_r_mot.dir_pin, OUTPUT);
 	pinMode(st_r_mot.cmd_pin, OUTPUT);
+	digitalWrite(st_r_mot.dir_pin, R_FORWARD);
+	analogWrite(st_r_mot.cmd_pin, 0);
 
 	r_enc.begin();
 
-	//Left motor
+	//--------------------------------------------------
+	// Left motor
+	//--------------------------------------------------
 	pinMode(st_l_mot.dir_pin, OUTPUT);
 	pinMode(st_l_mot.cmd_pin, OUTPUT);
+	digitalWrite(st_l_mot.dir_pin, L_FORWARD);
+	analogWrite(st_l_mot.cmd_pin, 0);
 
 	l_enc.begin();
 
+	//--------------------------------------------------
 	// PID
+	//--------------------------------------------------
 	l_pid.SetMode(AUTOMATIC);
-	l_pid.SetSampleTime(100); // ms
 	l_pid.SetOutputLimits(0, 255);
 
 	r_pid.SetMode(AUTOMATIC);
-	r_pid.SetSampleTime(100); // ms
 	r_pid.SetOutputLimits(0, 255);
 
-	//LCD
+	//--------------------------------------------------
+	// LCD
+	//--------------------------------------------------
 	lcd.begin();
 	lcd.cursor(false);
 	lcd.clear();
 	lcd.backlight(true);
 
-	//Debug
+	//--------------------------------------------------
+	// Serial
+	//--------------------------------------------------
 	Serial.begin(9600);
-//	Serial.print("Kp=");
-//	Serial.print(kp, 2);
-//	Serial.print(", Ki=");
-//	Serial.print(ki, 2);
-//	Serial.print(", Kd=");
-//	Serial.println(kd, 2);
-//	Serial.println("time,\tcons,\tvel,\tcmd");
 
-//Test
-	digitalWrite(st_r_mot.dir_pin, R_FORWARD);
-	analogWrite(st_r_mot.cmd_pin, 0);
-
-	digitalWrite(st_l_mot.dir_pin, L_FORWARD);
-	analogWrite(st_l_mot.cmd_pin, 0);
+	//--------------------------------------------------
+	// Debug
+	//--------------------------------------------------
 }
 
 //--------------------------------------------------
 //	Loop
 //--------------------------------------------------
-/**
- *
- */
-
 void loop()
 {
 	odo.compute(l_enc.getCount(), r_enc.getCount());
@@ -132,7 +112,7 @@ void loop()
 
 	l_pid.Compute();
 	r_pid.Compute();
-//	applyCommand(l_cmd);
+
 	analogWrite(st_l_mot.cmd_pin, (int) l_cmd);
 	analogWrite(st_r_mot.cmd_pin, (int) r_cmd);
 
@@ -142,7 +122,6 @@ void loop()
 		motorTime += 5000;
 
 		static uint8_t step = 0;
-
 		switch(step++){
 		case 0:
 			l_consigne = 50;
@@ -155,6 +134,7 @@ void loop()
 			break;
 		case 4:
 			l_consigne = 0;
+//			step = 0;
 			break;
 		}
 	}
@@ -168,41 +148,9 @@ void loop()
 		serialTime += 500;
 	}
 
-//	if(time % 30 == 0)
-//	else
-//	{
-//		l_consigne = 0;
-//		r_consigne = 0;
-//		analogWrite(st_l_mot.vit_pin, 0);
-//		analogWrite(st_r_mot.vit_pin, 0);
-//
-//		l_pid.setMode(PID_MANUAL);
-//
-//		time = 0;
-//		kp += 0.05;
-//
-//		Serial.print("\t\t\t\tKp=");
-//		Serial.println(kp, 2);
-//
-//		l_pid.setTunings(kp, ki, kd);
-//
-//		delay(200); //50ms
-//	}
-
 	//--------------------------------------------------
 	//	Print LCD & serial
 	//--------------------------------------------------
-//	if(time <= time_limit)
-//	{
-//		Serial.print((time++) * 50);
-//		Serial.print(",\t");
-//		Serial.print((int) l_consigne);
-//		Serial.print(",\t");
-//		Serial.print((int) st_vel.l_vel);
-//		Serial.print(",\t");
-//		Serial.println((int) l_cmd);
-//	}
-
 	static uint32 lcdTime = 0;
 	if(millis() > lcdTime)
 	{
@@ -214,23 +162,11 @@ void loop()
 		lcd.print(6, 1, l_cmd);
 		lcd.print(0, 2, "l_con:      ");
 		lcd.print(6, 2, l_consigne);
-//
-//		lcd.print(11, 0, "r_vel:      ");
-//		lcd.print(17, 0, st_vel.r_vel);
-//		lcd.print(11, 1, "r_cmd:      ");
-//		lcd.print(17, 1, r_cmd);
 
-//		lcd.print(0, 0, "l_pos:      ");
-//		lcd.print(6, 0, odo.l_cumul);
-//		lcd.print(0, 1, "l_cmd:      ");
-//		lcd.print(6, 1, l_cmd);
-//		lcd.print(0, 2, "l_con:      ");
-//		lcd.print(6, 2, l_consigne);
-
-//		lcd.print(11, 0, "r_vel:      ");
-//		lcd.print(17, 0, st_vel.r_vel);
-//		lcd.print(11, 1, "r_cmd:      ");
-//		lcd.print(17, 1, r_cmd);
+		lcd.print(11, 0, "r_vel:      ");
+		lcd.print(17, 0, st_vel.r_vel);
+		lcd.print(11, 1, "r_cmd:      ");
+		lcd.print(17, 1, r_cmd);
 
 		lcd.print(0, 3, "Kp:    ");
 		lcd.print(3, 3, l_pid.GetKp());
@@ -260,19 +196,7 @@ void doLeftEncoder()
 //--------------------------------------------------
 //	test
 //--------------------------------------------------
-void applyCommand(float i_f_command)
-{
-	if(i_f_command >= 0)
-	{
-		digitalWrite(st_l_mot.dir_pin, L_FORWARD);
-		analogWrite(st_l_mot.cmd_pin, (int) i_f_command);
-	}
-	else
-	{
-		digitalWrite(st_l_mot.dir_pin, L_BACKWARD);
-		analogWrite(st_l_mot.cmd_pin, (int) abs(i_f_command));
-	}
-}
+
 //--------------------------------------------------
 //	debug
 //--------------------------------------------------
