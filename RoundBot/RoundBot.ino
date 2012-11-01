@@ -1,12 +1,24 @@
+/*************************************************************************//**
+ * @file 	roundbot.ino
+ * @brief	xx
+ * @author	Nicolas BOUTIN
+ * @date	25 juil. 2012
+ * @module	xx
+ *****************************************************************************/
+
 // gets rid of annoying "depreciated conversion from string constant warning
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
+/*****************************************************************************
+ * INCLUDE
+ *****************************************************************************/
 #include <Arduino.h>
 #include <Wire.h>
 
 // Libraries
 #include "lcd_I2C.h"
 #include "PID_v1.h"
+#include "motor.h"
 
 // Project include
 #include "define.h"
@@ -14,71 +26,83 @@
 #include "odometry.h"
 #include "target.h"
 
+/*****************************************************************************
+ * CONSTANTS
+ *****************************************************************************/
+static const float f_kp = 3.75;
+static const float f_ki = 0.75;
+static const float f_kd = 0.025;
+
+/*****************************************************************************
+ * GLOBAL VARIABLES
+ *****************************************************************************/
+
+//--------------------------------------------------
+// LCD
+//--------------------------------------------------
 LCD_I2C lcd(0x00, 4, 20);
+
+//--------------------------------------------------
+// Motors & Encoders
+//--------------------------------------------------
+
+// dir_pin / cmd_pin / dir / cmd
+Motor r_mot(4, 5, R_FORWARD, 0);
+Motor l_mot(7, 6, L_FORWARD, 0);
+
+// pin_A / int_pin_A / pin_B / int_func / is_CCW
 Encoder r_enc(3, 1, 9, doRightEncoder, true);
 Encoder l_enc(2, 0, 8, doLeftEncoder, false);
-Odometry odo;
-Target target;
 
-ST_Motor st_r_mot = { 4, 5, R_FORWARD, 0 };
-ST_Motor st_l_mot = { 7, 6, L_FORWARD, 0 };
-
-ST_vel st_vel;
-ST_pos st_pos;
-
-float l_cmd = 0;
-float r_cmd = 0;
-uint32 time = 0;
-uint32 time_limit = 40;
-
+//--------------------------------------------------
+// PID
+//--------------------------------------------------
 // min = 5 (less no tested)
 // max = 60 (pwm = 255)
 float l_consigne = 50; //cm/sec
 float r_consigne = 50; //cm/sec
 
-float kp = 3.75;
-float ki = 0.75;
-float kd = 0.025;
+float l_cmd = 0;
+float r_cmd = 0;
+ST_vel st_vel;
 
-PID l_pid(l_consigne, st_vel.l_vel, l_cmd, kp, ki, kd);
-PID r_pid(r_consigne, st_vel.r_vel, r_cmd, kp, ki, kd);
+PID l_pid(l_consigne, st_vel.l_vel, l_cmd, f_kp, f_ki, f_kd);
+PID r_pid(r_consigne, st_vel.r_vel, r_cmd, f_kp, f_ki, f_kd);
 
 //--------------------------------------------------
-//	Setup
+// Others
 //--------------------------------------------------
-/**
- *
- */
+Odometry odo;
+Target target;
+
+ST_pos st_pos;
+
+/*****************************************************************************
+ * SETUP
+ *****************************************************************************/
 void setup()
 {
 	//--------------------------------------------------
 	// Right motor
 	//--------------------------------------------------
-	pinMode(st_r_mot.dir_pin, OUTPUT);
-	pinMode(st_r_mot.cmd_pin, OUTPUT);
-	digitalWrite(st_r_mot.dir_pin, R_FORWARD);
-	analogWrite(st_r_mot.cmd_pin, 0);
+//	pinMode(st_r_mot.dir_pin, OUTPUT);
+//	pinMode(st_r_mot.cmd_pin, OUTPUT);
+//	digitalWrite(st_r_mot.dir_pin, R_FORWARD);
+//	analogWrite(st_r_mot.cmd_pin, 0);
 
+	r_mot.begin();
 	r_enc.begin();
 
 	//--------------------------------------------------
 	// Left motor
 	//--------------------------------------------------
-	pinMode(st_l_mot.dir_pin, OUTPUT);
-	pinMode(st_l_mot.cmd_pin, OUTPUT);
-	digitalWrite(st_l_mot.dir_pin, L_FORWARD);
-	analogWrite(st_l_mot.cmd_pin, 0);
+//	pinMode(st_l_mot.dir_pin, OUTPUT);
+//	pinMode(st_l_mot.cmd_pin, OUTPUT);
+//	digitalWrite(st_l_mot.dir_pin, L_FORWARD);
+//	analogWrite(st_l_mot.cmd_pin, 0);
 
+	l_mot.begin();
 	l_enc.begin();
-
-	//--------------------------------------------------
-	// PID
-	//--------------------------------------------------
-//	l_pid.SetMode(AUTOMATIC);
-//	l_pid.SetOutputLimits(0, 255);
-//
-//	r_pid.SetMode(AUTOMATIC);
-//	r_pid.SetOutputLimits(0, 255);
 
 	//--------------------------------------------------
 	// LCD
@@ -96,12 +120,12 @@ void setup()
 	//--------------------------------------------------
 	// Debug
 	//--------------------------------------------------
-	Serial.println("time\tcons\tvel\tcmd");
+//	Serial.println("time\tcons\tvel\tcmd");
 }
 
-//--------------------------------------------------
-//	Loop
-//--------------------------------------------------
+/*****************************************************************************
+ * LOOP
+ *****************************************************************************/
 void loop()
 {
 	odo.compute(l_enc.getCount(), r_enc.getCount());
@@ -110,44 +134,14 @@ void loop()
 	l_pid.Compute();
 	r_pid.Compute();
 
-	analogWrite(st_l_mot.cmd_pin, (int) l_cmd);
-	analogWrite(st_r_mot.cmd_pin, (int) r_cmd);
-
-//	static uint32 motorTime = 5000;
-//	if(millis() > motorTime)
-//	{
-//		motorTime += 5000;
-//
-//		static uint8_t step = 0;
-//		switch(step++){
-//		case 0:
-//			l_consigne = 50;
-//			break;
-//		case 1:
-//			l_consigne = 0;
-//			break;
-//		case 3:
-//			l_consigne = 10;
-//			break;
-//		case 4:
-//			l_consigne = 0;
-////			step = 0;
-//			break;
-//		}
-//	}
+	l_mot.command(l_cmd);
+	r_mot.command(r_cmd);
 
 	//--------------------------------------------------
 	//	Print Serial
 	//--------------------------------------------------
 	static uint32 serialTime = 0;
-//	if(millis() > serialTime)
-//	{
-//		l_pid.SerialReceive();
-//		l_pid.SerialSend();
-//		serialTime += 500;
-//	}
-
-	if(serialTime < 1500)
+	if(millis() > serialTime)
 	{
 		Serial.print(serialTime);
 		Serial.print("\t");
@@ -159,11 +153,6 @@ void loop()
 
 		serialTime += 50;
 	}
-	else
-	{
-		l_consigne = 0;
-		r_consigne = 0;
-	}
 
 	//--------------------------------------------------
 	//	Print LCD
@@ -171,26 +160,19 @@ void loop()
 	static uint32 lcdTime = 0;
 	if(millis() > lcdTime)
 	{
-		lcdTime += 500;
+		lcdTime += 200;
 
-		lcd.print(0, 0, "l_vel:      ");
-		lcd.print(6, 0, st_vel.l_vel);
-		lcd.print(0, 1, "l_cmd:      ");
-		lcd.print(6, 1, l_cmd);
-		lcd.print(0, 2, "l_con:      ");
-		lcd.print(6, 2, l_consigne);
+		lcd.printf(0, 0, "l_vel:%d", (uint32_t) st_vel.l_vel);
+		lcd.printf(0, 1, "l_cmd:%d", (uint32_t) l_cmd);
+		lcd.printf(0, 2, "l_con:%d", (uint32_t) l_consigne);
 
-		lcd.print(11, 0, "r_vel:      ");
-		lcd.print(17, 0, st_vel.r_vel);
-		lcd.print(11, 1, "r_cmd:      ");
-		lcd.print(17, 1, r_cmd);
+		lcd.printf(11, 0, "r_vel:%d", (uint32_t) st_vel.r_vel);
+		lcd.printf(11, 1, "r_cmd:%d", (uint32_t) r_cmd);
+		lcd.printf(11, 2, "r_con:%d", (uint32_t) r_consigne);
 
-		lcd.print(0, 3, "Kp:    ");
-		lcd.print(3, 3, l_pid.GetKp());
-		lcd.print(6, 3, "Ki:    ");
-		lcd.print(9, 3, l_pid.GetKi());
-		lcd.print(12, 3, "Kd:    ");
-		lcd.print(15, 3, l_pid.GetKd());
+		lcd.printf(0, 3, "Kp:%d", (uint32_t) l_pid.GetKp());
+		lcd.printf(6, 3, "Ki:%d", (uint32_t) l_pid.GetKi());
+		lcd.printf(12, 3, "Kd:%d", (uint32_t) l_pid.GetKd());
 	}
 
 	delay(50); //50ms

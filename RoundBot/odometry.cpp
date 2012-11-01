@@ -1,21 +1,8 @@
-//	 Start of the Copyright Notice
-//	****************************************************************************
-// 	* Copyright Itron SAS.                                                     *
-//	* This computer program includes confidential proprietary information and  *
-//	* is a trade secret of Itron. All use, disclosures and/or reproduction 	   *
-//	* is prohibited unless authorized in writing.          					   *
-//	* All Rights Reserved                                                      *
-//	****************************************************************************
-//	 End of the Copyright Notice
-
 /*************************************************************************//**
  * @file 	odometry.cpp
  * @brief	xx
- * @author	boutboutnico
+ * @author	Nicolas BOUTIN
  * @date	25 juil. 2012
- * @company	Itron
- * @site	Chasseneuil
- * @product	xx
  * @module	xx
  *****************************************************************************/
 
@@ -47,6 +34,11 @@ Odometry::Odometry()
 	l_cumul = 0;
 }
 
+/**
+ *
+ * @param l_enc
+ * @param r_enc
+ */
 void Odometry::compute(int32 l_enc, int32 r_enc)
 {
 	int32 l_samp = 0;

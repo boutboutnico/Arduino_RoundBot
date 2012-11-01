@@ -41,11 +41,6 @@ typedef unsigned char uint8;
 typedef unsigned int uint16;
 typedef unsigned long int uint32;
 
-#define R_FORWARD LOW
-#define R_BACKWARD HIGH
-#define L_FORWARD HIGH
-#define L_BACKWARD LOW
-
 typedef struct
 {
 	float theta_rad;
@@ -64,14 +59,6 @@ typedef struct
 	float l_vel;
 	float r_vel;
 }ST_vel;
-
-typedef struct
-{
-	uint8_t dir_pin;
-	uint8_t cmd_pin;
-	uint8_t dir;
-	int16 cmd;
-} ST_Motor;
 
 #endif /* DEFINE_H_ */
 /*****************************************************************************

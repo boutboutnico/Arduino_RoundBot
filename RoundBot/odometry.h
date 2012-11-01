@@ -1,21 +1,8 @@
-//	 Start of the Copyright Notice
-//	****************************************************************************
-// 	* Copyright Itron SAS.                                                     *
-//	* This computer program includes confidential proprietary information and  *
-//	* is a trade secret of Itron. All use, disclosures and/or reproduction 	   *
-//	* is prohibited unless authorized in writing.          					   *
-//	* All Rights Reserved                                                      *
-//	****************************************************************************
-//	 End of the Copyright Notice
-
 /*************************************************************************//**
  * @file 	odometry.h
  * @brief	xx
- * @author	boutboutnico
+ * @author	Nicolas BOUTIN
  * @date	25 juil. 2012
- * @company	Itron
- * @site	Chasseneuil
- * @product	xx
  * @module	xx
  *****************************************************************************/
 
@@ -28,9 +15,11 @@
 #define WHEEL_BASE 27.75 //mm
 #define LEFT_CLICKS_PER_CM 14.40
 #define RIGHT_CLICKS_PER_CM 14.30
+
 /*****************************************************************************
  * INCLUDE
  *****************************************************************************/
+
 #include "define.h"
 /*****************************************************************************
  * CLASS
@@ -46,7 +35,7 @@ class Odometry
 public:
 
 	Odometry();
-	void compute(int32 l_enc, int32 r_enc);
+	void compute(int32_t l_enc, int32_t r_enc);
 	ST_pos getPos();
 	ST_vel getVel();
 
@@ -61,8 +50,8 @@ private:
 	float r_vel;	// cm/sec
 	float l_vel;	// cm/sec
 
-	int32 l_last_enc;
-	int32 r_last_enc;
+	int32_t l_last_enc;
+	int32_t r_last_enc;
 
 };
 
